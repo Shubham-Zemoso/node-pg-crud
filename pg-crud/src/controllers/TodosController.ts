@@ -1,9 +1,9 @@
 import pool from "../dbconfig/dbconnector";
-import { Response, Request } from "express";
+import { Response, Request, NextFunction } from "express";
 import * as validator from "express-validator";
 
 class TodosController {
-  public async get(req: Request, res: Response) {
+  public async get(req: Request, res: Response, next: NextFunction) {
     try {
       const client = await pool.connect();
 
@@ -20,7 +20,7 @@ class TodosController {
     }
   }
 
-  public async getById(req: Request, res: Response) {
+  public async getById(req: Request, res: Response, next: NextFunction) {
     try {
       const client = await pool.connect();
       const id = req.params.id;
@@ -43,7 +43,7 @@ class TodosController {
     }
   }
 
-  public async add(req: Request, res: Response) {
+  public async add(req: Request, res: Response, next: NextFunction) {
     const errors = validator.validationResult(req);
 
     if (!errors.isEmpty()) {
@@ -61,7 +61,7 @@ class TodosController {
 
         client.release();
 
-        res.status(201).send({
+        res.status(200).send({
           message: "todo added successfully!!",
           data: { title, isDone },
         });
@@ -71,7 +71,7 @@ class TodosController {
     }
   }
 
-  public async update(req: Request, res: Response) {
+  public async update(req: Request, res: Response, next: NextFunction) {
     try {
       const client = await pool.connect();
       const id = req.params.id;
@@ -104,7 +104,7 @@ class TodosController {
     }
   }
 
-  public async deleteById(req: Request, res: Response) {
+  public async deleteById(req: Request, res: Response, next: NextFunction) {
     try {
       const client = await pool.connect();
       const id = req.params.id;

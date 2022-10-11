@@ -1,15 +1,28 @@
-import server from './server';
-import * as dotenv from 'dotenv'; 
+import express, { Application, Router } from "express";
+import todosRouter from "./routers/TodosRouter";
+import pool from "./dbconfig/dbconnector";
+import * as dotenv from "dotenv";
 
 dotenv.config();
+const app = express();
 
-const port = parseInt(process.env.PORT || "4000");
+const port =
+  process.env.ENV === "testing"
+    ? parseInt("5000")
+    : parseInt(process.env.PORT || "4000");
 
-const starter = new server()
-  .start(port)
-  .then((port) => console.log(`Running on port ${port}`))
-  .catch((error) => {
-    console.log(error);
-  });
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "1mb" }));
 
-export default starter;
+app.use("/todos", todosRouter);
+
+pool.connect(function (err, client, done) {
+  if (err) throw new Error(err.message);
+  console.log("Connected");
+});
+
+app.listen(port, () => {
+  console.log(`Server is listening to port:${port}`);
+});
+
+export default app;

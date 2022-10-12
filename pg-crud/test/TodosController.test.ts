@@ -1,87 +1,123 @@
 process.env.NODE_ENV = "test";
 
 import { expect } from "chai";
-import { agent as request } from "supertest";
-import sinon from "sinon";
+import { Request } from "express";
+import request from "supertest";
 import app from "../src/app";
-import * as dotenv from "dotenv";
-import TodosController from "../src/controllers/TodosController";
-import { Request, Response } from "express";
+import sinon from "sinon";
+import TodoService from "../src/service/TodoService";
+import TodosController from "../src/controller/TodosController";
 
-dotenv.config();
-
-describe("CRUD calls testing", () => {
-  const req = {
-    body: {
-      title: "test",
-      isDone: false,
+describe("TodoController", () => {
+  let res;
+  let todoService;
+  res = {
+    status: function () {
+      return res;
     },
-    params: {
-      id: "1",
-    },
-  } as unknown as Request;
-
-  const res = [
-    {
-      id: 1,
-      title: "test1",
-      isDone: true,
-    },
-  ] as unknown as Response;
+    send: function () {},
+  };
+  const todoRepo = sinon.spy();
+  todoService = new TodoService(todoRepo);
 
   it("checks fetching of all todos", async () => {
-    // const getStub = sinon.stub(new TodosController(), "get").resolves(res);
-
-    // const todos = new TodosController().get(req, res, sinon.stub());
-    // todos.then((data) => _{
-    // })
-    // sinon.assert.called(getStub);
-
-    const res = await request(app).get("/todos/all").send({});
-    console.log(res.body);
-    expect(res.status).to.equal(200);
-    expect(res.body).not.to.be.empty;
-    expect(res.body).to.be.an("array");
+    const stubValue = [
+      {
+        id: 1,
+        title: "test1",
+        isDone: true,
+      },
+    ];
+    const req = { body: {} } as unknown as Request;
+    const todoController = new TodosController(todoService);
+    const stub = sinon.stub(todoController, "get").returns(stubValue);
+    const result = await todoController.get(req, res, sinon.stub());
+    expect(stub.calledOnce).to.be.true;
+    expect(result).not.to.be.empty;
+    expect(result).to.be.an("array");
   });
 
   it("checks fetching of a todo", async () => {
-    const res = await request(app).get("/todos/id/2");
-    console.log(res.body);
-    expect(res.status).to.equal(200);
-    expect(res.body).not.to.be.empty;
+    const stubValue = {
+      found: true,
+      todo: {
+        title: "test1",
+        isDone: false,
+      },
+    };
+    const req = { params: { id: "1" } } as unknown as Request;
+    const todoController = new TodosController(todoService);
+    const stub = sinon.stub(todoController, "getById").returns(stubValue);
+    const result = await todoController.getById(req, res, sinon.stub());
+    expect(stub.calledOnce).to.be.true;
+    expect(result).not.to.be.empty;
   });
-
   it("checks not found todo", async () => {
-    const res = await request(app).get("/todos/id/2000");
-    console.log(res.body);
-    expect(res.status).to.equal(404);
-    expect(res.body).not.to.be.empty;
+    const stubValue = {
+      found: false,
+      message: `todo with id:990 not found`,
+    };
+    const req = { params: { id: "990" } } as unknown as Request;
+    const todoController = new TodosController(todoService);
+    const stub = sinon.stub(todoController, "getById").returns(stubValue);
+    const result = await todoController.getById(req, res, sinon.stub());
+
+    expect(stub.calledOnce).to.be.true;
+    expect(result).not.to.be.empty;
   });
 
-  it("checks adding a todo", async () => {
-    const res = await request(app).post("/todos/add").send({
-      title: "testadd",
-      isDone: false,
-    });
-    console.log(res.body);
-    expect(res.status).to.equal(200);
-    expect(res.body).not.to.be.empty;
+  it("checks adding of a todo", async () => {
+    const stubValue = {
+      todo: {
+        title: "test1",
+        isDone: false,
+      },
+    };
+    const req = {
+      body: { title: stubValue.todo.title, isDone: stubValue.todo.isDone },
+    } as unknown as Request;
+    const todoController = new TodosController(todoService);
+    const stub = sinon.stub(todoController, "add").returns(stubValue);
+    const result = await todoController.add(req, res, sinon.stub());
+
+    expect(stub.calledOnce).to.be.true;
+    expect(result).not.to.be.empty;
   });
 
-  it("checks updating a todo", async () => {
-    const res = await request(app).put("/todos/update/1").send({
-      title: "testUpdate",
-      isDone: false,
-    });
-    console.log(res.body);
-    expect(res.status).to.equal(201);
-    expect(res.body).not.to.be.empty;
+  it("checks updating of a todo with given id", async () => {
+    const stubValue = {
+      found: true,
+      todo: {
+        title: "test1",
+        isDone: false,
+      },
+    };
+    const req = {
+      params: { id: "1" },
+      body: { title: stubValue.todo.title, isDone: stubValue.todo.isDone },
+    } as unknown as Request;
+    const todoController = new TodosController(todoService);
+    const stub = sinon.stub(todoController, "update").returns(stubValue);
+    const result = await todoController.update(req, res, sinon.stub());
+
+    expect(stub.calledOnce).to.be.true;
+    expect(result).not.to.be.empty;
   });
 
-  it("checks deleting a todo", async () => {
-    const res = await request(app).delete("/todos/delete/13");
-    console.log(res.body);
-    expect(res.status).to.equal(201);
-    expect(res.body).not.to.be.empty;
+  it("checks deleting of a todo with given id", async () => {
+    const stubValue = {
+      found: true,
+      todo: {
+        title: "test1",
+        isDone: false,
+      },
+    };
+    const req = { params: { id: "1" } } as unknown as Request;
+    const todoController = new TodosController(todoService);
+    const stub = sinon.stub(todoController, "deleteById").returns(stubValue);
+    const result = await todoController.deleteById(req, res, sinon.stub());
+
+    expect(stub.calledOnce).to.be.true;
+    expect(result).not.to.be.empty;
   });
 });

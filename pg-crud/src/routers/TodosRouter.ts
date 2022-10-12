@@ -1,12 +1,16 @@
 import { Router } from "express";
-import TodosController from "../controllers/TodosController";
+import TodosController from "../controller/TodosController";
 import * as validator from "express-validator";
+import TodoService from "../service/TodoService";
+import TodoRepository from "../repository/TodoRepository";
 
 const router = Router();
-const todosController = new TodosController();
+const todoRepository = new TodoRepository();
+const todoService = new TodoService(todoRepository);
+const todosController = new TodosController(todoService);
 
-router.get("/all", todosController.get);
-router.get("/id/:id", todosController.getById);
+router.get("/all", todosController.get.bind(todosController));
+router.get("/id/:id", todosController.getById.bind(todosController));
 router.post(
   "/add",
   [
@@ -16,8 +20,8 @@ router.post(
       .isLength({ min: 5, max: 12 }),
     validator.check("isDone", "Please enter only true or false").isBoolean(),
   ],
-  todosController.add
+  todosController.add.bind(todosController)
 );
-router.put("/update/:id", todosController.update);
-router.delete("/delete/:id", todosController.deleteById);
+router.put("/update/:id", todosController.update.bind(todosController));
+router.delete("/delete/:id", todosController.deleteById.bind(todosController));
 export default router;
